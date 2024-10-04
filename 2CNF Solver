@@ -7,7 +7,43 @@ def determineImplications():
             implications[-a].append(b)
         if a not in implications[-b]  and not -b == a:
             implications[-b].append(a)
-            
+
+# uses bfs algorithm to traverse the graph, returning the corresponding boolean value
+# depending on whether or not it runs into a contradiction with the current assignment
+# of variables
+def traverseGraph(start):
+    # initiates the queue of variable assignments to be evaluated
+    queue = []
+    queue.append(start)
+    while len(queue) > 0:
+        currentVar = queue.pop(0)
+        for nextVar in implications[currentVar]:
+            # if nextVar is None, sets it to True (since start is True) and its negated
+            # self to False and appends it to queue to be evaluated later
+            if tempAssignments[nextVar] == None:
+                tempAssignments[nextVar] = True
+                tempAssignments[-nextVar] = False
+                queue.append(nextVar)
+            # if nextVar is True, do nothing since assigning a variable True that is
+            # already True effectively does nothing
+            elif tempAssignments[nextVar] == True:
+                continue
+            # return False if nextVar is False since a contradiction arises when trying
+            # to assign a variable True when it is already set to False
+            else:
+                return False
+    return True
+
+# resets the temporary assignments of the variables back to None
+def backtrack():
+    global tempAssignments
+    tempAssignments = permAssignments.copy()
+
+# makes the temporary assignments of the variables permanent
+def makePermanent():
+    global permAssignments
+    permAssignments = tempAssignments.copy()     
+  
 # converts the CNF formula in the txt file to a list of clauses
 file_in = open('', 'r').read()
 split_file = file_in.split('\n')
@@ -26,40 +62,11 @@ for i in range (-num_variables, num_variables + 1):
 # creates a dictionary to store the temporary assignments of the variables
 tempAssignments = permAssignments.copy()
 
-# creates a dictionary that stores the implications graph generated from calling determineImplications
+# creates a dictionary that stores the implications graph generated from determineImplications
 implications = {}
 for i in range (num_variables * -1, num_variables + 1):
     implications[i] = []
 determineImplications()
-
-# uses bfs algorithm to traverse the graph, returning the corresponding boolean value
-# depending on whether or not it runs into a contradiction with the current assignment
-# of variables
-def traverseGraph(start):
-    queue = []
-    queue.append(start)
-    while len(queue) > 0:
-        currentVar = queue.pop(0)
-        for nextVar in implications[currentVar]:
-            if tempAssignments[nextVar] == None:
-                tempAssignments[nextVar] = True
-                tempAssignments[-nextVar] = False
-                queue.append(nextVar)
-            elif tempAssignments[nextVar] == True:
-                continue
-            else:
-                return False
-    return True
-
-# resets the temporary assignments of the variables back to None
-def backtrack():
-    global tempAssignments
-    tempAssignments = permAssignments.copy()
-
-# makes the temporary assignments of the variables permanent
-def makePermanent():
-    global permAssignments
-    permAssignments = tempAssignments.copy()
 
 # loops through all the variable assignments searching for the next unassigned one
 for i in range (1, num_variables + 1):
@@ -68,8 +75,8 @@ for i in range (1, num_variables + 1):
         # negated self to false
         tempAssignments[i] = True
         tempAssignments[-i] = False
-        # checks if the assignment is valid by calling traverseGraph and if it is,
-        # makes the assignments permanent
+        # calls traverseGraph to start at the newly assigned variable and if the function finds
+        # no contradictions, makes the assignments permanent
         if traverseGraph(i):
             makePermanent() 
             continue
@@ -79,8 +86,8 @@ for i in range (1, num_variables + 1):
             backtrack()
             tempAssignments[i] = False
             tempAssignments[-i] = True
-            # checks if the assignment is valid by calling traverseGraph and if it is,
-            # makes the assignments permanent
+            # calls traverseGraph to start at the newly assigned variable and if the function finds
+            # no contradictions, makes the assignments permanent
             if traverseGraph(-i):
                 makePermanent()
             # if the assignment is not valid, ends the program since the formula is unsatisfiable
@@ -90,5 +97,5 @@ for i in range (1, num_variables + 1):
 
 # prints the assignments of the variables that satisfy the formula
 for i in range (1, num_variables + 1):
-    print("" + str(i) + " = " + str(permAssignments[i]))
+    print("x" + str(i) + " = " + str(permAssignments[i]))
 print("TRUE")
