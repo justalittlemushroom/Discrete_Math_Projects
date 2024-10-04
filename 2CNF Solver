@@ -1,0 +1,94 @@
+# creates the implications graph by evaluating each clause in the formula
+def determineImplications():
+    for i in range (0, len(clauses)):
+        a = clauses[i][0]
+        b = clauses[i][1]
+        if b not in implications[-a] and not -a == b:
+            implications[-a].append(b)
+        if a not in implications[-b]  and not -b == a:
+            implications[-b].append(a)
+            
+# converts the CNF formula in the txt file to a list of clauses
+file_in = open('', 'r').read()
+split_file = file_in.split('\n')
+split_file.pop(0)
+split_file.pop(-1)
+clauses = [list(map(int, line.split(' '))) for line in split_file]
+
+# finds the number of unique variables in the formula
+num_variables = max(abs(x) for clause in clauses for x in clause)
+
+# creates a dictionary to store the permanent assignments of the variables
+permAssignments = {}
+for i in range (-num_variables, num_variables + 1):
+    permAssignments[i] = None
+
+# creates a dictionary to store the temporary assignments of the variables
+tempAssignments = permAssignments.copy()
+
+# creates a dictionary that stores the implications graph generated from calling determineImplications
+implications = {}
+for i in range (num_variables * -1, num_variables + 1):
+    implications[i] = []
+determineImplications()
+
+# uses bfs algorithm to traverse the graph, returning the corresponding boolean value
+# depending on whether or not it runs into a contradiction with the current assignment
+# of variables
+def traverseGraph(start):
+    queue = []
+    queue.append(start)
+    while len(queue) > 0:
+        currentVar = queue.pop(0)
+        for nextVar in implications[currentVar]:
+            if tempAssignments[nextVar] == None:
+                tempAssignments[nextVar] = True
+                tempAssignments[-nextVar] = False
+                queue.append(nextVar)
+            elif tempAssignments[nextVar] == True:
+                continue
+            else:
+                return False
+    return True
+
+# resets the temporary assignments of the variables back to None
+def backtrack():
+    global tempAssignments
+    tempAssignments = permAssignments.copy()
+
+# makes the temporary assignments of the variables permanent
+def makePermanent():
+    global permAssignments
+    permAssignments = tempAssignments.copy()
+
+# loops through all the variable assignments searching for the next unassigned one
+for i in range (1, num_variables + 1):
+    if permAssignments[i] == None:
+        # once the next unassigned variable is found, assigns it to true and its
+        # negated self to false
+        tempAssignments[i] = True
+        tempAssignments[-i] = False
+        # checks if the assignment is valid by calling traverseGraph and if it is,
+        # makes the assignments permanent
+        if traverseGraph(i):
+            makePermanent() 
+            continue
+        # if the assignment is invalid, backtracks and assigns the variable to false
+        # and its negated self to false
+        else:
+            backtrack()
+            tempAssignments[i] = False
+            tempAssignments[-i] = True
+            # checks if the assignment is valid by calling traverseGraph and if it is,
+            # makes the assignments permanent
+            if traverseGraph(-i):
+                makePermanent()
+            # if the assignment is not valid, ends the program since the formula is unsatisfiable
+            else:
+                print("FALSE")
+                exit()
+
+# prints the assignments of the variables that satisfy the formula
+for i in range (1, num_variables + 1):
+    print("" + str(i) + " = " + str(permAssignments[i]))
+print("TRUE")
