@@ -1,0 +1,55 @@
+import math
+import itertools
+
+num_pairs = int(input("Enter Number of Pairs of Brothers and Sisters: "))
+
+# calculates total number of valid pairings and prints them all
+def calculate_total_va(n):
+    # creates arrays containing all possible sister permutation
+    sisters = []
+    for i in range (1, n + 1):
+        sisters.append("x" + str(i))
+        sisters.append("y" + str(i))
+    sisters = itertools.permutations(sisters)
+    
+    # calculates total number of valid pairings and prints each one
+    count = 0
+    for permutation in sisters:
+        isValid = True
+        for i in range(0, n * 2, 2):
+            if (int(permutation[i][1]) == int(permutation[i + 1][1])):
+                isValid = False
+        if isValid:
+            count += 1
+            print(permutation)
+    print("Valid Pairs: " + str(count))
+
+def calculate_total_vb(n):
+    # creates an array that store R(n)
+    recurrence_r = [0, 0]
+    for k in range(2, n + 1):
+        recurrence_r.append(2 ** (2 * k - 1) * math.factorial(k) * math.factorial(k - 1))
+
+    # creates an array that store T(n)
+    recurrence_t = [1] + [0] * n 
+    for i in range(1, n + 1):
+        total = 0
+        for k in range(2, i + 1):
+            total += (recurrence_r[k] * recurrence_t[i - k] * math.comb(i, k) * math.comb(i - 1, k - 1))
+        recurrence_t[i] = total
+        print("T(" + str(i) + "):\t" + str(recurrence_t[i]))
+
+# calculates total number of valid pairings
+def calculate_total_vc(n):
+    recurrence_t = [1] + [0] * n
+    for i in range(2, n + 1):
+        recurrence_t[i] = 2 * i * 2 * (i - 1) * (recurrence_t[i - 2] * 2 * (i - 1) + recurrence_t[i - 1])
+        print("T(" + str(i) + "):\t" + str(recurrence_t[i]))
+
+# prints results
+print("Part A")
+calculate_total_va(num_pairs)
+print("Part B")
+calculate_total_vb(num_pairs)
+print("Part C")
+calculate_total_vc(num_pairs)
